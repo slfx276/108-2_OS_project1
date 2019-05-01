@@ -27,7 +27,7 @@ typedef struct _Process
 int proc_assign_cpu(int pid, int core);
 
 /* Execute the process and return pid */
-int proc_exec(Process proc);
+int process_execute(Process proc);
 
 /* Set very low priority tp process */
 int proc_block(int pid);

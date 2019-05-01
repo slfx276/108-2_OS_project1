@@ -125,7 +125,7 @@ int scheduling(Process *proc, int process_num, int policy)
 		{
 			if (proc[i].ready_time == current_time) 
 			{
-				proc[i].pid = proc_exec(proc[i]); //if ready, pid != -1
+				proc[i].pid = process_execute(proc[i]); //if ready, pid != -1
 				proc_block(proc[i].pid);
 #ifdef DEBUG
 				fprintf(stderr, "%s ready at time %d.\n", proc[i].name, current_time);

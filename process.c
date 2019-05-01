@@ -7,8 +7,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
-#define GET_TIME 314
-#define PRINTK 315
+
 
 /* framework */
 int proc_assign_cpu(int pid, int core)
@@ -30,36 +29,28 @@ int proc_assign_cpu(int pid, int core)
 	return 0;
 }
 
-int proc_exec(Process proc)
+
+int process_execute(Process proc)
 {
-	int pid = fork();
-
-	if (pid < 0) {
-		perror("fork");
-		return -1;
-	}
-
-	if (pid == 0) {
-		unsigned long start_sec, start_nsec, end_sec, end_nsec;
-		char to_dmesg[200];
-		syscall(GET_TIME, &start_sec, &start_nsec);
-		for (int i = 0; i < proc.exec_time; i++) {
-			UNIT_T();
-#ifdef DEBUG
-			if (i % 100 == 0)
-				fprintf(stderr, "%s: %d/%d\n", proc.name, i, proc.exec_time);
-#endif
+    struct timespec start, end;
+    int current_pid;
+    int pid = fork();
+    if(pid < 0){
+        perror("fork error:");
+        return -1;
+    }
+    if(pid == 0){ //child process
+        current_pid = getpid();
+        syscall(345, 1, &start.tv_sec, &start.tv_nsec, &end.tv_sec, &end.tv_nsec, &current_pid);
+        for (int i = 0; i < proc.exec_time; i++) {
+			exec_unit_time();
 		}
-		syscall(GET_TIME, &end_sec, &end_nsec);
-		sprintf(to_dmesg, "[project1] %d %lu.%09lu %lu.%09lu\n", getpid(), start_sec, start_nsec, end_sec, end_nsec);
-		syscall(PRINTK, to_dmesg);
+        syscall(345, 0, &start.tv_sec, &start.tv_nsec, &end.tv_sec, &end.tv_nsec, &current_pid);
 		exit(0);
-	}
-	
+    }
 	/* Assign child to another core prevent from interupted by parant */
 	proc_assign_cpu(pid, CHILD_CPU);
-
-	return pid;
+    return pid;
 }
 
 int proc_block(int pid)

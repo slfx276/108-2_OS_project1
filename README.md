@@ -2,7 +2,7 @@
 
 ## Add System Call
 ##### 1. Download and extract kernel, take [[OS-HW1]](https://docs.google.com/presentation/d/1KwS9PuGZxLXQ9IEYJE7KUhnz3bHohJLWOH-CRGZkC40/edit#slide=id.p25) as reference
-<pre><code>take the newest vision for example
+<pre><code>take the newest version for example
 $wget https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.0.10.tar.xz (Download on https://www.kernel.org/)
 $tar Jxvf linux-5.0.10.tar.xz
 </code></pre>
