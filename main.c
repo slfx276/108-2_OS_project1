@@ -22,9 +22,21 @@
 //         return 1;
 // }
 
+int cmp(const void *a , const void *b)
+{
+    Process c = *(Process *)a;
+    Process d = *(Process*)b;
+    if(c.ready_time < d.ready_time)
+        return -1;
+    else if(c.ready_time == d.ready_time)
+        return 0;
+    else
+        return 1;
+}
 
 
-int main(int argc, char* argv[])
+
+int main(void)
 {
 
 	char _policy[5];
@@ -42,6 +54,8 @@ int main(int argc, char* argv[])
 	{
 		scanf("%s %d %d", proc[i].name, &proc[i].ready_time, &proc[i].exec_time);
 	}
+
+	qsort(proc , process_num , sizeof(Process) , cmp);
 
 	if (strcmp(_policy, "FIFO") == 0) {
 		policy = FIFO;

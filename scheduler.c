@@ -9,38 +9,36 @@
 #include <sched.h>
 
 /* Last context switch time for RR scheduling */
-static int t_last;
+static int RR_last_time;
 
+/* Initial scheduler */
 /* Current unit time */
-static int ntime;
+static int ntime = 0;
 
 /* Index of running process. -1 if no process running */
-static int running;
+static int running = -1; // the process which is running in CPU
 
 /* Number of finish Process */
-static int finish_cnt;
+static int finish_cnt = 0;
 
 /* Sort processes by ready time */
 // int cmp(const void *a, const void *b) {
 // 	return ((Process *)a)->ready_time - ((Process *)b)->ready_time;
 // }
-int cmp(const void *a , const void *b)
-{
-    Process c = *(Process *)a;
-    Process d = *(Process*)b;
-    if(c.ready_time < d.ready_time)
-        return -1;
-    else if(c.ready_time == d.ready_time)
-        return 0;
-    else
-        return 1;
-}
-
-
-
+// int cmp(const void *a , const void *b)
+// {
+//     Process c = *(Process *)a;
+//     Process d = *(Process*)b;
+//     if(c.ready_time < d.ready_time)
+//         return -1;
+//     else if(c.ready_time == d.ready_time)
+//         return 0;
+//     else
+//         return 1;
+// }
 
 /* Return index of next process  */
-int next_process(Process *proc, int nproc, int policy)
+int next_process(Process *proc, int process_num, int policy)
 {
 	/* Non-preemptive */
 	if (running != -1 && (policy == SJF || policy == FIFO))
@@ -49,7 +47,7 @@ int next_process(Process *proc, int nproc, int policy)
 	int ret = -1;
 
 	if (policy == PSJF || policy ==  SJF) {
-		for (int i = 0; i < nproc; i++) {
+		for (int i = 0; i < process_num; i++) {
 			/* if process not ready or has finished , see next one*/
 			if (proc[i].pid == -1 || proc[i].exec_time == 0)
 				continue;
@@ -60,7 +58,7 @@ int next_process(Process *proc, int nproc, int policy)
 	}
 
 	else if (policy == FIFO) {
-		for(int i = 0; i < nproc; i++) {
+		for(int i = 0; i < process_num; i++) {
 			if(proc[i].pid == -1 || proc[i].exec_time == 0)
 				continue;
 			if(ret == -1 || proc[i].ready_time < proc[ret].ready_time)
@@ -70,17 +68,17 @@ int next_process(Process *proc, int nproc, int policy)
 
 	else if (policy == RR) {
 		if (running == -1) {
-			for (int i = 0; i < nproc; i++) {
+			for (int i = 0; i < process_num; i++) {
 				if (proc[i].pid != -1 && proc[i].exec_time > 0){
 					ret = i;
 					break;
 				}
 			}
 		}
-		else if ((ntime - t_last) % 500 == 0)  {
-			ret = (running + 1) % nproc;
+		else if ((ntime - RR_last_time) % 500 == 0)  {
+			ret = (running + 1) % process_num;
 			while (proc[ret].pid == -1 || proc[ret].exec_time == 0)
-				ret = (ret + 1) % nproc;
+				ret = (ret + 1) % process_num;
 		}
 		else
 			ret = running;
@@ -89,13 +87,13 @@ int next_process(Process *proc, int nproc, int policy)
 	return ret;
 }
 
-int scheduling(Process *proc, int nproc, int policy)
+int scheduling(Process *proc, int process_num, int policy)
 {
 	/* process sorted by read time */
-	qsort(proc, nproc, sizeof(Process), cmp);
+	// qsort(proc, process_num, sizeof(Process), cmp);
 
 	/* Initial pid = -1 imply not ready */
-	for (int i = 0; i < nproc; i++)
+	for (int i = 0; i < process_num; i++)
 		proc[i].pid = -1;
 
 	/* Set Parent process to single core in order to prevent from preemption */
@@ -107,10 +105,7 @@ int scheduling(Process *proc, int nproc, int policy)
 	
 
 	/* start to execute child process */
-	/* Initial scheduler */
-	ntime = 0;
-	running = -1; // the process which is running in CPU
-	finish_cnt = 0;
+
 	
 	while(1) 
 	{
@@ -134,12 +129,12 @@ int scheduling(Process *proc, int nproc, int policy)
 			finish_cnt++;
 
 			/* if All process finish */
-			if (finish_cnt == nproc)
+			if (finish_cnt == process_num)
 				break;
 		}
 
 		/* Check if process ready and execute */
-		for (int i = 0; i < nproc; i++) 
+		for (int i = 0; i < process_num; i++) 
 		{
 			if (proc[i].ready_time == ntime) 
 			{
@@ -153,23 +148,23 @@ int scheduling(Process *proc, int nproc, int policy)
 		}
 
 		/* Select next running  process */
-		int next = next_process(proc, nproc, policy);
-		if (next != -1) 
+		int next_proc = next_process(proc, process_num, policy);
+		if (next_proc != -1) 
 		{
 			/* Context switch */
-			if (running != next) 
+			if (running != next_proc) 
 			{
-				proc_wakeup(proc[next].pid);
+				proc_wakeup(proc[next_proc].pid);
 				proc_block(proc[running].pid);
-				running = next;
-				t_last = ntime;
+				running = next_proc;
+				RR_last_time = ntime;
 			}
 		}
 
 		/* Run an unit of time */
-		UNIT_T();
+		exec_unit_time();
 		if (running != -1)
-			proc[running].exec_time--; //process execution time --
+			proc[running].exec_time -=1; //process execution time --
 		ntime++; /* current time ++ , go through whole schedule flow at each time. */
 	}
 
