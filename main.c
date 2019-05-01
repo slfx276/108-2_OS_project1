@@ -26,9 +26,8 @@ int cmp(const void *a , const void *b)
 
 int main(void)
 {
-	printf("%d\n",TEST);
 	char _policy[5];
-	int policy=-1;
+	int policy = -1;
 	int process_num,i;
 	Process *proc;
 

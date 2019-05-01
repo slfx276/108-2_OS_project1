@@ -9,6 +9,7 @@
 #include <sched.h>
 #include "error.h"
 
+
 /* Last context switch time for RR scheduling */
 static int RR_last_time;
 
@@ -22,41 +23,32 @@ static int running = -1; // the process which is running in CPU
 /* Number of finish Process */
 static int finish_cnt = 0;
 
-/* Sort processes by ready time */
-// int cmp(const void *a, const void *b) {
-// 	return ((Process *)a)->ready_time - ((Process *)b)->ready_time;
-// }
 
+////////////////////////////////////////////////////////////////////////////////////////
 /* Return index of next process  */
-int next_process(Process *proc, int process_num, int policy)
+int FIFO_next_proc(Process *proc, int process_num, int policy)
 {
 	/* Non-preemptive */
-	if (running != -1 && (policy == SJF || policy == FIFO))
+	if (running != -1)
 		return running;
 
 	int result = -1;
 
-	if (policy == PSJF || policy ==  SJF) {
-		for (int i = 0; i < process_num; i++) {
-			/* if process not ready or has finished , see next one*/
-			if (proc[i].pid == -1 || proc[i].exec_time == 0)
-				continue;
-			/* if find process which has shorter execution time */
-			if (result == -1 || proc[i].exec_time < proc[result].exec_time)
-				result = i;
-		}
-	}
-
-	else if (policy == FIFO) {
+    if (policy == FIFO) {
 		for(int i = 0; i < process_num; i++) {
 			if(proc[i].pid == -1 || proc[i].exec_time == 0)
 				continue;
 			if(result == -1 || proc[i].ready_time < proc[result].ready_time)
 				result = i;
 		}
-        }
-
-	else if (policy == RR) {
+    }
+	return result;
+}
+int RR_next_process(Process *proc, int process_num, int policy)
+{
+	int result = -1;
+	if (policy == RR) 
+    {
 		if (running == -1) {
 			for (int i = 0; i < process_num; i++) {
 				if (proc[i].pid != -1 && proc[i].exec_time > 0){
@@ -73,9 +65,32 @@ int next_process(Process *proc, int process_num, int policy)
 		else
 			result = running;
 	}
-
 	return result;
 }
+int SJF_next_process(Process *proc, int process_num, int policy)
+{
+	/* Non-preemptive */
+	if (running != -1 && policy == SJF)
+		return running;
+
+	int result = -1;
+
+	if (policy == PSJF || policy ==  SJF) 
+    {
+		for (int i = 0; i < process_num; i++) 
+        {
+			/* if process not ready or has finished , see next one*/
+			if (proc[i].pid == -1 || proc[i].exec_time == 0)
+				continue;
+			/* if find process which has shorter execution time */
+			if (result == -1 || proc[i].exec_time < proc[result].exec_time)
+				result = i;
+		}
+	}
+	return result;
+
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 int scheduling(Process *proc, int process_num, int policy)
 {
@@ -125,7 +140,7 @@ int scheduling(Process *proc, int process_num, int policy)
 		{
 			if (proc[i].ready_time == current_time) 
 			{
-				proc[i].pid = process_execute(proc[i]); //if ready, pid != -1
+				proc[i].pid = proc_exec(proc[i]); //if ready, pid != -1
 				proc_block(proc[i].pid);
 #ifdef DEBUG
 				fprintf(stderr, "%s ready at time %d.\n", proc[i].name, current_time);
@@ -135,7 +150,22 @@ int scheduling(Process *proc, int process_num, int policy)
 		}
 
 		/* Select next running  process */
-		int next_proc = next_process(proc, process_num, policy);
+		// int next_proc = next_process(proc, process_num, policy);
+		int next_proc = -1;
+        if(policy == FIFO)
+        {
+            next_proc = FIFO_next_proc(proc, process_num, policy);
+        }
+        else if(policy == RR)
+        {
+            next_proc = RR_next_process(proc , process_num , policy);
+        }
+        else
+        {
+            next_proc = SJF_next_process(proc , process_num , policy);
+        }
+
+
 		if (next_proc != -1) 
 		{
 			/* Context switch */
