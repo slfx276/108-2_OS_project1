@@ -7,13 +7,14 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sched.h>
+#include "error.h"
 
 /* Last context switch time for RR scheduling */
 static int RR_last_time;
 
 /* Initial scheduler */
 /* Current unit time */
-static int ntime = 0;
+static int current_time = 0;
 
 /* Index of running process. -1 if no process running */
 static int running = -1; // the process which is running in CPU
@@ -25,17 +26,6 @@ static int finish_cnt = 0;
 // int cmp(const void *a, const void *b) {
 // 	return ((Process *)a)->ready_time - ((Process *)b)->ready_time;
 // }
-// int cmp(const void *a , const void *b)
-// {
-//     Process c = *(Process *)a;
-//     Process d = *(Process*)b;
-//     if(c.ready_time < d.ready_time)
-//         return -1;
-//     else if(c.ready_time == d.ready_time)
-//         return 0;
-//     else
-//         return 1;
-// }
 
 /* Return index of next process  */
 int next_process(Process *proc, int process_num, int policy)
@@ -44,7 +34,7 @@ int next_process(Process *proc, int process_num, int policy)
 	if (running != -1 && (policy == SJF || policy == FIFO))
 		return running;
 
-	int ret = -1;
+	int result = -1;
 
 	if (policy == PSJF || policy ==  SJF) {
 		for (int i = 0; i < process_num; i++) {
@@ -52,8 +42,8 @@ int next_process(Process *proc, int process_num, int policy)
 			if (proc[i].pid == -1 || proc[i].exec_time == 0)
 				continue;
 			/* if find process which has shorter execution time */
-			if (ret == -1 || proc[i].exec_time < proc[ret].exec_time)
-				ret = i;
+			if (result == -1 || proc[i].exec_time < proc[result].exec_time)
+				result = i;
 		}
 	}
 
@@ -61,8 +51,8 @@ int next_process(Process *proc, int process_num, int policy)
 		for(int i = 0; i < process_num; i++) {
 			if(proc[i].pid == -1 || proc[i].exec_time == 0)
 				continue;
-			if(ret == -1 || proc[i].ready_time < proc[ret].ready_time)
-				ret = i;
+			if(result == -1 || proc[i].ready_time < proc[result].ready_time)
+				result = i;
 		}
         }
 
@@ -70,21 +60,21 @@ int next_process(Process *proc, int process_num, int policy)
 		if (running == -1) {
 			for (int i = 0; i < process_num; i++) {
 				if (proc[i].pid != -1 && proc[i].exec_time > 0){
-					ret = i;
+					result = i;
 					break;
 				}
 			}
 		}
-		else if ((ntime - RR_last_time) % 500 == 0)  {
-			ret = (running + 1) % process_num;
-			while (proc[ret].pid == -1 || proc[ret].exec_time == 0)
-				ret = (ret + 1) % process_num;
+		else if ((current_time - RR_last_time) % 500 == 0)  {
+			result = (running + 1) % process_num;
+			while (proc[result].pid == -1 || proc[result].exec_time == 0)
+				result = (result + 1) % process_num;
 		}
 		else
-			ret = running;
+			result = running;
 	}
 
-	return ret;
+	return result;
 }
 
 int scheduling(Process *proc, int process_num, int policy)
@@ -95,7 +85,6 @@ int scheduling(Process *proc, int process_num, int policy)
 	/* Initial pid = -1 imply not ready */
 	for (int i = 0; i < process_num; i++)
 		proc[i].pid = -1;
-
 	/* Set Parent process to single core in order to prevent from preemption */
 	proc_assign_cpu(getpid(), PARENT_CPU);
 	
@@ -109,7 +98,7 @@ int scheduling(Process *proc, int process_num, int policy)
 	
 	while(1) 
 	{
-		//fprintf(stderr, "Current time: %d\n", ntime);
+		//fprintf(stderr, "Current time: %d\n", current_time);
 
 		/* Check if running process finish */
 
@@ -118,15 +107,13 @@ int scheduling(Process *proc, int process_num, int policy)
 		{
 		
 #ifdef DEBUG
-			fprintf(stderr, "%s finish at time %d.\n", proc[running].name, ntime);
+			fprintf(stderr, "%s finish at time %d.\n", proc[running].name, current_time);
 #endif
-			//kill(running, SIGKILL);
-
 			/* wait for child process */
 			waitpid(proc[running].pid, NULL, 0); // wait the child process until finish.
 			printf("%s %d\n", proc[running].name, proc[running].pid);
 			running = -1;
-			finish_cnt++;
+			finish_cnt += 1;
 
 			/* if All process finish */
 			if (finish_cnt == process_num)
@@ -136,12 +123,12 @@ int scheduling(Process *proc, int process_num, int policy)
 		/* Check if process ready and execute */
 		for (int i = 0; i < process_num; i++) 
 		{
-			if (proc[i].ready_time == ntime) 
+			if (proc[i].ready_time == current_time) 
 			{
 				proc[i].pid = proc_exec(proc[i]); //if ready, pid != -1
 				proc_block(proc[i].pid);
 #ifdef DEBUG
-				fprintf(stderr, "%s ready at time %d.\n", proc[i].name, ntime);
+				fprintf(stderr, "%s ready at time %d.\n", proc[i].name, current_time);
 #endif
 			}
 
@@ -157,15 +144,15 @@ int scheduling(Process *proc, int process_num, int policy)
 				proc_wakeup(proc[next_proc].pid);
 				proc_block(proc[running].pid);
 				running = next_proc;
-				RR_last_time = ntime;
+				RR_last_time = current_time;
 			}
 		}
 
 		/* Run an unit of time */
 		exec_unit_time();
 		if (running != -1)
-			proc[running].exec_time -=1; //process execution time --
-		ntime++; /* current time ++ , go through whole schedule flow at each time. */
+			proc[running].exec_time -= 1; //process execution time --
+		current_time += 1; /* current time ++ , go through whole schedule flow at each time. */
 	}
 
 	return 0;

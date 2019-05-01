@@ -7,21 +7,9 @@
 #include <unistd.h>
 #include "process.h"
 #include "scheduler.h"
-
+#include "error.h"
 
 // /* define comparison for quicksort*/
-// int cmp(const void *a , const void *b)
-// {
-//     Process c = *(Process *)a;
-//     Process d = *(Process*)b;
-//     if(c.ready_time < d.ready_time)
-//         return -1;
-//     else if(c.ready_time == d.ready_time)
-//         return 0;
-//     else
-//         return 1;
-// }
-
 int cmp(const void *a , const void *b)
 {
     Process c = *(Process *)a;
@@ -38,7 +26,7 @@ int cmp(const void *a , const void *b)
 
 int main(void)
 {
-
+	printf("%d\n",TEST);
 	char _policy[5];
 	int policy=-1;
 	int process_num,i;
