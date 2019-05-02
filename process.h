@@ -7,12 +7,6 @@
 #define PARENT_CPU 0
 
 /* Running one unit time */
-#define UNIT_T()				\
-{						\
-	volatile unsigned long i;		\
-	for (i = 0; i < 1000000UL; i++);	\
-}
-						\
 #define exec_unit_time()   { volatile unsigned long i; for(i=0;i<1000000UL;i++); }
 
 typedef struct _Process
@@ -21,10 +15,14 @@ typedef struct _Process
     int ready_time;
     int exec_time;
     pid_t pid;
+    int start_time;
+    int finish_time;
+    int Have_used_CPU;
+
 }Process;
 
 /* Assign process to specific core */
-int proc_assign_cpu(int pid, int core);
+int assign_CPU(int pid , int core_number);
 
 /* Execute the process and return pid */
 int process_execute(Process proc);

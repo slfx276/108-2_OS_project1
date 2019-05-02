@@ -21,7 +21,7 @@ static int current_time = 0;
 static int running = -1; // the process which is running in CPU
 
 /* Number of finish Process */
-static int finish_cnt = 0;
+static int finished_proc_num = 0;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -47,6 +47,7 @@ int FIFO_next_proc(Process *proc, int process_num, int policy)
 int RR_next_process(Process *proc, int process_num, int policy)
 {
 	int result = -1;
+	int quantum = 500;
 	if (policy == RR) 
     {
 		if (running == -1) {
@@ -57,7 +58,7 @@ int RR_next_process(Process *proc, int process_num, int policy)
 				}
 			}
 		}
-		else if ((current_time - RR_last_time) % 500 == 0)  {
+		else if ((current_time - RR_last_time) % quantum == 0)  {
 			result = (running + 1) % process_num;
 			while (proc[result].pid == -1 || proc[result].exec_time == 0)
 				result = (result + 1) % process_num;
@@ -94,6 +95,7 @@ int SJF_next_process(Process *proc, int process_num, int policy)
 
 int scheduling(Process *proc, int process_num, int policy)
 {
+	printf("\nProcess id:\n");
 	/* process sorted by read time */
 	// qsort(proc, process_num, sizeof(Process), cmp);
 
@@ -101,7 +103,7 @@ int scheduling(Process *proc, int process_num, int policy)
 	for (int i = 0; i < process_num; i++)
 		proc[i].pid = -1;
 	/* Set Parent process to single core in order to prevent from preemption */
-	proc_assign_cpu(getpid(), PARENT_CPU);
+	assign_CPU(getpid(), PARENT_CPU);
 	
 	/* Set Parent process a high priority to scheduler. let it use cpu 
 		and then we will send all child processes to cpu for exectuing */
@@ -122,28 +124,32 @@ int scheduling(Process *proc, int process_num, int policy)
 		{
 		
 #ifdef DEBUG
-			fprintf(stderr, "%s finish at time %d.\n", proc[running].name, current_time);
+			printf( "%s finish at time %d.\n", proc[running].name, current_time);
 #endif
+			//add
+			proc[running].finish_time = current_time;
+
 			/* wait for child process */
 			waitpid(proc[running].pid, NULL, 0); // wait the child process until finish.
 			printf("%s %d\n", proc[running].name, proc[running].pid);
 			running = -1;
-			finish_cnt += 1;
+			finished_proc_num += 1;
 
 			/* if All process finish */
-			if (finish_cnt == process_num)
+			if (finished_proc_num == process_num)
 				break;
 		}
 
-		/* Check if process ready and execute */
+		/* Check if process ready and then execute */
 		for (int i = 0; i < process_num; i++) 
 		{
 			if (proc[i].ready_time == current_time) 
 			{
-				proc[i].pid = proc_exec(proc[i]); //if ready, pid != -1
+				/* execute for a unit and then stop to see whether need to context switch */
+				proc[i].pid = process_execute(proc[i]); //if ready, pid != -1
 				proc_block(proc[i].pid);
 #ifdef DEBUG
-				fprintf(stderr, "%s ready at time %d.\n", proc[i].name, current_time);
+				printf( "%s ready at time %d.\n", proc[i].name, current_time);
 #endif
 			}
 
@@ -181,9 +187,28 @@ int scheduling(Process *proc, int process_num, int policy)
 		/* Run an unit of time */
 		exec_unit_time();
 		if (running != -1)
+		{
 			proc[running].exec_time -= 1; //process execution time --
+			//add. record start time.
+			if(proc[running].Have_used_CPU == 0)
+			{
+				proc[running].Have_used_CPU = 1;
+				proc[running].start_time = current_time;
+			}
+
+		}
+
 		current_time += 1; /* current time ++ , go through whole schedule flow at each time. */
 	}
+
+	/* print schedule result */
+	printf("\nresult:\n");
+	printf("%9s %6s\n","start","end");
+	for(int i = 0 ; i < process_num ; i++)
+	{
+		printf("%s %6d %6d\n",proc[i].name , proc[i].start_time , proc[i].finish_time);
+	}
+	printf("\n");
 
 	return 0;
 }

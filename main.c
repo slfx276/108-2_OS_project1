@@ -9,6 +9,7 @@
 #include "scheduler.h"
 #include "error.h"
 
+
 // /* define comparison for quicksort*/
 int cmp(const void *a , const void *b)
 {
@@ -21,8 +22,6 @@ int cmp(const void *a , const void *b)
     else
         return 1;
 }
-
-
 
 int main(void)
 {
@@ -40,6 +39,7 @@ int main(void)
 	for (i = 0; i < process_num; i++) 
 	{
 		scanf("%s %d %d", proc[i].name, &proc[i].ready_time, &proc[i].exec_time);
+		proc[i].Have_used_CPU = 0;
 	}
 
 	qsort(proc , process_num , sizeof(Process) , cmp);
