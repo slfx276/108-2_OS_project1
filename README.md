@@ -41,7 +41,7 @@ $sudo make -j4 install</code></pre>
 ## Compile & Execute this project
 ##### Linux is recommended , Windows may cause compile errors at fork() or other system calls.
 <pre><code>$make  
-$./main < test_data.txt</code></pre>
+$sudo ./main < test_data.txt</code></pre>
 
 
 #### main.c
