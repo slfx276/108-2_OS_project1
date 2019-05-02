@@ -9,6 +9,38 @@
 #include <sched.h>
 #include "error.h"
 
+/* other direction */
+#define HEAP_INITIAL_CAPACITY 32
+struct heap {
+        size_t data_size;
+
+        void **data;
+        size_t size, capacity;
+};
+static inline int heap_create(struct heap *heap, size_t data_size)
+{
+        heap->data_size = data_size;
+        // heap->comp = comp;
+        heap->size = 0;
+        heap->capacity = HEAP_INITIAL_CAPACITY;
+
+        /* heap->data[0] is not used */
+        if ((heap->data = malloc((heap->capacity + 1) * sizeof(void *))) == NULL)
+                return -1;
+
+        return 0;
+}
+static inline void heap_destroy(struct heap *heap)
+{
+        size_t i;
+
+        for (i = 1; i < heap->size + 1; ++i)
+                free(heap->data[i]);
+        free(heap->data);
+}
+
+
+//------------------------------------------------------------------------------
 
 /* Last context switch time for RR scheduling */
 static int RR_last_time;
@@ -76,6 +108,7 @@ int SJF_next_process(Process *proc, int process_num, int policy)
 
 	int result = -1;
 
+	/* SJF: cpu idle , or PSJF: Preemptive */
 	if (policy == PSJF || policy ==  SJF) 
     {
 		for (int i = 0; i < process_num; i++) 
@@ -95,9 +128,7 @@ int SJF_next_process(Process *proc, int process_num, int policy)
 
 int scheduling(Process *proc, int process_num, int policy)
 {
-	printf("\nProcess id:\n");
-	/* process sorted by read time */
-	// qsort(proc, process_num, sizeof(Process), cmp);
+	printf("Process id:\n");
 
 	/* Initial pid = -1 imply not ready */
 	for (int i = 0; i < process_num; i++)
@@ -140,7 +171,7 @@ int scheduling(Process *proc, int process_num, int policy)
 				break;
 		}
 
-		/* Check if process ready and then execute */
+		/* Check if process ready and then execute to print in command "dmesg" */
 		for (int i = 0; i < process_num; i++) 
 		{
 			if (proc[i].ready_time == current_time) 
@@ -171,7 +202,8 @@ int scheduling(Process *proc, int process_num, int policy)
             next_proc = SJF_next_process(proc , process_num , policy);
         }
 
-
+		/* if there is a better choice of process under this scheduling policy */
+		/* if the policy is preemptive, do context switch here */
 		if (next_proc != -1) 
 		{
 			/* Context switch */

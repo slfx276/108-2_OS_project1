@@ -1,10 +1,10 @@
 #ifndef _PROCESS_H_
 #define _PROCESS_H_
+#define CHILD_CPU 1
+#define PARENT_CPU 0
 
 #include <sys/types.h>
 
-#define CHILD_CPU 1
-#define PARENT_CPU 0
 
 /* Running one unit time */
 #define exec_unit_time()   { volatile unsigned long i; for(i=0;i<1000000UL;i++); }
@@ -24,7 +24,7 @@ typedef struct _Process
 /* Assign process to specific core */
 int assign_CPU(int pid , int core_number);
 
-/* Execute the process and return pid */
+/* Execute the process and return pid , use system call printk() here. */
 int process_execute(Process proc);
 
 /* Set very low priority tp process */

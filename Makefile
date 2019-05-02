@@ -15,4 +15,5 @@ process.o: process.c process.h Makefile
 
 clean:
 	rm -rf *o
-
+run:
+	sudo ./main
