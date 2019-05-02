@@ -1,30 +1,33 @@
-1.  Design:
+## 1. Design:
+在 scheduling() function裡面每一個current time單位會進行以下動作：
 
-    在 scheduling() function裡面每一個current time單位會進行以下動作：
     a.  更新已經使用cpu執行完畢的process
+
     b.  尋找有沒有這個時間點ready的process
+
     c.  選擇下一個可以得到cpu的process，如果是preemptive的方法就會進行context switch。
 
 
-    因為在進行排程的時候最主要的不同之處就是在於選擇下一個可以進入cpu的process的時間以及選擇哪一個 processs。
+因為在進行排程的時候最主要的不同之處就是在於選擇下一個可以進入cpu的process的時間以及選擇哪一個 processs。
 
-    FIFO_next_process():
-    -我們純粹以ready time的排序選擇下一個可以進入的process而且因為不可插隊，所以只要被選到就可以直接執行到結束，非常簡單就能進排程。
+##### FIFO_next_process():
 
-    RR_next_process():
-    -預設RR每個process的time quantum = 500，如果距離上一次context switch是500的倍數就會再切換成下一個process，切換的方式就是傳給下一個號碼的process(如果它需要CPU)。 
+>我們純粹以ready time的排序選擇下一個可以進入的process而且因為不可插隊，所以只要被選到就可以直接執行到結束，非常簡單就能進排程。
 
-    SJF_next_process():
-    -包含了SJF跟PSJF的選擇方式，SJF一樣是不可插隊，所以選到的process可以一直執行直到結束，只要確認每個時間點如果cpu是idle的就選shortest job來執行。PSJF的話不論有沒有process正在執行都要選這個時間點的shortest job並且回傳，在scheduling function中如果PSJF回傳的不是正在執行的process就會進行插隊，把正在執行的process "block"掉，"wakeup"可以插隊的process。
+##### RR_next_process():
+>預設RR每個process的time quantum = 500，如果距離上一次context switch是500的倍數就會再切換成下一個process，切換的方式就是傳給下一個號碼的process(如果它需要CPU)。 
+
+##### SJF_next_process():
+>包含了SJF跟PSJF的選擇方式，SJF一樣是不可插隊，所以選到的process可以一直執行直到結束，只要確認每個時間點如果cpu是idle的就選shortest job來執行。PSJF的話不論有沒有process正在執行都要選這個時間點的shortest job並且回傳，在scheduling function中如果PSJF回傳的不是正在執行的process就會進行插隊，把正在執行的process "block"掉，"wakeup"可以插隊的process。
 
 
 
-2.  Contribution:
+## 2. Contribution:
 
-R07922099 - main. scheuler.
+R07922099 - main. scheuler.  
 T07505201 - process. system call processing
 
-3.  Results:
+## 3. Results:
 ------------------------------------FIFO-----------------------------------
 FIFO_1
 Process id:
