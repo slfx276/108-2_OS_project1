@@ -21,7 +21,7 @@ $tar Jxvf linux-5.0.10.tar.xz
 <pre><code>345 common proc_time sys_proc_time</code></pre>
 
 ##### 6. create .config and first time kernel compilation
-<pre><code>$cd linux-x.x.x
+<pre><code>$cd linux-x.x.x  // x.x.x is Linux kernel version.
 $make menuconfig
 </code></pre>
 
