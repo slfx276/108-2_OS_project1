@@ -24,19 +24,9 @@ $tar Jxvf linux-5.0.10.tar.xz
 <pre><code>$cd linux-x.x.x
 $make menuconfig
 </code></pre>
-> ... if 'make menuconfig' error ... <br>
-> $sudo apt-get install libncurses5-dev libncursesw5-dev <br>
-> $sudo apt-get install flex bison <br>
-<pre><code>$make bzImage
-$sudo make modules
-$sudo make modules_install
-$sudo make install
-$sudo mkinitramfs -o /boot/initrd.img-4.14.25
-'''reboot'''</code></pre>
 
-##### 7. Comfigure and Compile Kernel (4 = number of cores)
-<pre><code>$make -j4 bzImage
-$sudo make -j4 install</code></pre>
+- then just follow the step in **Linux_kenel_compile.md**.
+
 
 ## Compile & Execute this project
 ##### Linux is recommended , Windows may cause compile errors at fork() or other system calls.
