@@ -1,5 +1,7 @@
 # 107_2_OS_project1
 
+**有些檔案上傳錯誤，要使用必須再重新檢查一下，例如：schedule.c 裡面的 FIFO_next_proc() function 等等...**
+
 ## Add System Call
 ##### 1. Download and extract kernel, take [[OS-HW1]](https://docs.google.com/presentation/d/1KwS9PuGZxLXQ9IEYJE7KUhnz3bHohJLWOH-CRGZkC40/edit#slide=id.p25) as reference
 <pre><code>take the newest version for example
